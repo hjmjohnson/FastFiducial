@@ -37,6 +37,11 @@ class FastFiducialWidget:
     """
 
     def __init__(self, parent=None):
+        self.fixed = None
+        self.moving = None
+        self.fixedVolumeNodeSelector = None
+        self.movingVolumeNodeSelector = None
+        self.slicerVersion = None
         if parent is None:
             self.parent = slicer.qMRMLWidget()
             self.parent.setLayout(qt.QVBoxLayout())
@@ -48,9 +53,6 @@ class FastFiducialWidget:
         else:
             self.parent = parent
         self.layout = self.parent.layout()
-        self.fixed = None
-        self.moving = None
-        self.slicerVersion = None
 
     def setup(self):
         self.slicerVersion = int(slicer.app.majorVersion)
@@ -60,31 +62,13 @@ class FastFiducialWidget:
         self._inputLayoutSection()
         self._fiducialLayoutSection()
         self._registrationLayoutSection()
-        # TODO: self.addPickFiducialsWidget(parent=self.fiducialsFormLayout)
-        # qtFile = os.path.join(os.path.dirname(slicer.modules.fastfiducial.path),'Designer','moduleGUI.ui')
-        # self.fiducialFormLayout = self._load_QtUIFile(qtFile)
         self.layout.addStretch(1)
 
-    # def _load_QtUIFile(self, filename):
-    #     fiducialLayout = None
-    #     # Load UI file
-    #     uiloader = qt.QUiLoader()
-    #     file = qt.QFile(filename)
-    #     try:
-    #         file.open(qt.QFile.ReadOnly)
-    #         fiducialLayoutWidget = uiloader.load(file)
-    #         self.layout.addWidget(fiducialLayoutWidget)
-    #     finally:
-    #         file.close()
-    #     return qt.QFormLayout(fiducialLayout)
-    #     # Get references to both the QPushButton and the QLineEdit
-    #     # clear_button = line_edit_widget.findChild(qt.QPushButton, 'ClearButton')
-    #     # line_edit = line_edit_widget.findChild(qt.QLineEdit, 'LineEdit')
-    #     # clear_button.connect('clicked()', line_edit, 'clear()')
-    #     # line_edit_widget.show()
-
     def _threeByThreeCompareView(self):
-        # Create scene view with three slice views on top and three beneath (colors either R,G,Y)
+        """
+        Create scene view with three slice views on top and three beneath
+        (colors R,G,Y for top and bottom)
+        """
         layoutManager = slicer.app.layoutManager()
         if layoutManager is None:
             return
@@ -133,6 +117,7 @@ class FastFiducialWidget:
                                                               toolTip='Select a fixed volume')
         self.fixedVolumeSelector.connect('currentNodeChanged(vtkMRMLNode*)',
                                          self.setFixedVolumeNode)
+        self.parent.connect('mrmlSceneChangeg(vtkMRMLScene*)', self.setFixedSliceViews)
         self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)',
                             self.fixedVolumeSelector,
                             'setMRMLScene(vtkMRMLScene*)')
@@ -150,6 +135,7 @@ class FastFiducialWidget:
                                                                toolTip='Select a moving volume')
         self.movingVolumeSelector.connect('currentNodeChanged(vtkMRMLNode*)',
                                           self.setMovingVolumeNode)
+        self.parent.connect('mrmlSceneChangeg(vtkMRMLScene*)', self.setMovingSliceViews)
         self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)',
                             self.movingVolumeSelector,
                             'setMRMLScene(vtkMRMLScene*)')
@@ -206,19 +192,30 @@ class FastFiducialWidget:
         # fiducialEditFrame.layout().addWidget(fiducialEditLabel)
         # fiducialEditFrame.layout().addWidget(fiducialEditSpinBox)
 
+
     def createNewFiducial(self):
         # TODO: Write this function
-        # Create the appropriate fiducial type
-        if self.style == 4:
-            newFiducial = slicer.vtkMRMLAnnotationFiducialNode()
-        elif self.style == 3:
-            newFiducial = slicer.vtkMRMLFiducialNode()
-        # Get next mouse click or keyboard
-        self.interactor = slicer.vtkMRMLInteractionNode()
+        # If the lists are not already added to the scene, add them
+        if not slicer.mrmlScene.IsNodePresent(self.fixed.fiducialList):
+            slicer.mrmlScene.AddNode(self.fixed.fiducialList)
+        if not slicer.mrmlScene.IsNodePresent(self.moving.fiducialList):
+            slicer.mrmlScene.AddNode(self.moving.fiducialList)
+        # Get the singleton interactor from the scene
+        self.interactor = slicer.mrmlScene.AddNode(slicer.vtkMRMLInteractionNode())
         self.interactor.SwitchToSinglePlaceMode()
+        # Get the singleton selector from the scene
+        self.selector = slicer.mrmlScene.AddNode(slicer.vtkMRMLSelectionNode())
+
+        self.selector.SetActiveFiducialListID(self.fixed.fiducialList.GetID())
+        self.selector.SetActiveAnnotationID(self.fixed.newFiducial)
+        if slicer.mrmlScene.Get... = self.interactor.EndPlacementEvent:
         # if left-click:
-        #    if inside slice view:
-        #        get volume under click
+        fiducialVolumeID = self.selector.GetSecondaryVolumeID()
+        if fiducialVolumeID == self.fixed.volume.GetID():
+        #    if inside correct volume slice view:
+            self.selector.
+        else:
+            self.createNewFiducial()
         #        create fiducial in volume labeled with fiducial list index
         #        add fiducial to appropriate list
         #    else:
@@ -239,6 +236,7 @@ class FastFiducialWidget:
         #    reset done flags
         # elif RET:
         #    ignore (both fiducials need to be set (i.e. both flags need to == 'done'))
+        self.selector.AddNewAnnotationIDToList(self.fixed.newFiducial.GetID())
         print "Created a new fiducial"
 
     def editSelectedFiducial(self, fiducialIndex):

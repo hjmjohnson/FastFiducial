@@ -29,9 +29,11 @@ class ImageDataContainer():
     """
 
     def __init__(self, slicerVersion):
-        self.volume = slicer.vtkMRMLScalarVolumeNode
-        self.display = slicer.vtkMRMLScalarVolumeDisplayNode
+        self.volume = slicer.vtkMRMLScalarVolumeNode()
+        self.display = slicer.vtkMRMLScalarVolumeDisplayNode()
         if slicerVersion == 4:
-            self.fiducialList = slicer.vtkMRMLAnnotationHierarchyNode
+            self.fiducialList = slicer.vtkMRMLAnnotationHierarchyNode()
+            self.newFiducial = slicer.vtkMRMLAnnotationFiducialNode()
         else:
-            self.fiducialList = slicer.vtkMRMLFiducialListNode
+            self.fiducialList = slicer.vtkMRMLFiducialListNode()
+            self.newFiducial = slicer.vtkMRMLFiducial()
