@@ -117,7 +117,7 @@ class FastFiducialWidget:
                                                               toolTip='Select a fixed volume')
         self.fixedVolumeSelector.connect('currentNodeChanged(vtkMRMLNode*)',
                                          self.setFixedVolumeNode)
-        self.parent.connect('mrmlSceneChangeg(vtkMRMLScene*)', self.setFixedSliceViews)
+        self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)', self.setFixedSliceViews)
         self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)',
                             self.fixedVolumeSelector,
                             'setMRMLScene(vtkMRMLScene*)')
@@ -135,7 +135,7 @@ class FastFiducialWidget:
                                                                toolTip='Select a moving volume')
         self.movingVolumeSelector.connect('currentNodeChanged(vtkMRMLNode*)',
                                           self.setMovingVolumeNode)
-        self.parent.connect('mrmlSceneChangeg(vtkMRMLScene*)', self.setMovingSliceViews)
+        self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)', self.setMovingSliceViews)
         self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)',
                             self.movingVolumeSelector,
                             'setMRMLScene(vtkMRMLScene*)')
@@ -192,7 +192,6 @@ class FastFiducialWidget:
         # fiducialEditFrame.layout().addWidget(fiducialEditLabel)
         # fiducialEditFrame.layout().addWidget(fiducialEditSpinBox)
 
-
     def createNewFiducial(self):
         # TODO: Write this function
         # If the lists are not already added to the scene, add them
@@ -205,10 +204,11 @@ class FastFiducialWidget:
         self.interactor.SwitchToSinglePlaceMode()
         # Get the singleton selector from the scene
         self.selector = slicer.mrmlScene.AddNode(slicer.vtkMRMLSelectionNode())
-
         self.selector.SetActiveFiducialListID(self.fixed.fiducialList.GetID())
         self.selector.SetActiveAnnotationID(self.fixed.newFiducial)
-        if slicer.mrmlScene.Get... = self.interactor.EndPlacementEvent:
+        # Set up the scene observer
+        self.interactor.connect('')
+        if slicer.mrmlScene.:
         # if left-click:
         fiducialVolumeID = self.selector.GetSecondaryVolumeID()
         if fiducialVolumeID == self.fixed.volume.GetID():
