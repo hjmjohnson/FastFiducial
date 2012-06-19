@@ -1,0 +1,52 @@
+<layout type="vertical">
+ <item>
+  <layout type="horizontal">
+   <item>
+    <view class="vtkMRMLSliceNode" singletontag="RedTop">
+     <property name="orientation" action="default">Axial</property>
+     <property name="viewlabel" action="default">R1</property>
+     <property name="viewcolor" action="default">#F34A33</property>
+    </view>
+   </item>
+   <item>
+    <view class="vtkMRMLSliceNode" singletontag="YellowTop">
+     <property name="orientation" action="default">Sagittal</property>
+     <property name="viewlabel" action="default">Y1</property>
+     <property name="viewcolor" action="default">#EDD54C</property>
+    </view>
+   </item>
+   <item>
+    <view class="vtkMRMLSliceNode" singletontag="GreenTop">
+     <property name="orientation" action="default">Coronal</property>
+     <property name="viewlabel" action="default">G1</property>
+     <property name="viewcolor" action="default">#6EB04B</property>
+    </view>
+   </item>
+  </layout>
+ </item>
+ <item>
+  <layout type="horizontal">
+   <item>
+    <view class="vtkMRMLSliceNode" singletontag="RedBottom">
+     <property name="orientation" action="default">Axial</property>
+     <property name="viewlabel" action="default">R2</property>
+     <property name="viewcolor" action="default">#F34A33</property>
+    </view>
+   </item>
+   <item>
+    <view class="vtkMRMLSliceNode" singletontag="YellowBottom">
+     <property name="orientation" action="default">Sagittal</property>
+     <property name="viewlabel" action="default">Y2</property>
+     <property name="viewcolor" action="default">#EDD54C</property>
+    </view>
+   </item>
+   <item>
+    <view class="vtkMRMLSliceNode" singletontag="GreenBottom">
+     <property name="orientation" action="default">Coronal</property>
+     <property name="viewlabel" action="default">G2</property>
+     <property name="viewcolor" action="default">#6EB04B</property>
+    </view>
+   </item>
+  </layout>
+ </item>
+</layout>
