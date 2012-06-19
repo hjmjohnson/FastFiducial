@@ -41,6 +41,8 @@ class FastFiducialWidget:
         self.moving = None
         self.fixedVolumeNodeSelector = None
         self.movingVolumeNodeSelector = None
+        self.interactor = None
+        self.selector = None
         self.slicerVersion = None
         if parent is None:
             self.parent = slicer.qMRMLWidget()
@@ -57,7 +59,10 @@ class FastFiducialWidget:
     def setup(self):
         self.slicerVersion = int(slicer.app.majorVersion)
         self.fixed = ImageDataContainer(self.slicerVersion)
+        self.fixed.addToScene(slicer.mrmlScene)
         self.moving = ImageDataContainer(self.slicerVersion)
+        self.interactor = slicer.mrmlScene.AddNode(slicer.vtkMRMLInteractionNode())
+        self.selector = slicer.mrmlScene.AddNode(slicer.vtkMRMLSelectionNode())
         # self._threeByThreeCompareView()
         self._inputLayoutSection()
         self._fiducialLayoutSection()
@@ -163,6 +168,12 @@ class FastFiducialWidget:
         else:
             raise Exception('I have no idea why this would ever happen...')
 
+    def setFixedSliceViews(self):
+        pass
+
+    def setMovingSliceViews(self):
+        pass
+
     def _fiducialLayoutSection(self):
         fiducialCollapsibleButton = FFCollapsibleButton('Pick fiducials')
         self.layout.addWidget(fiducialCollapsibleButton)
@@ -176,8 +187,10 @@ class FastFiducialWidget:
         fiducialPickButton = qt.QPushButton('Create')
         fiducialPickLabel.setBuddy(fiducialPickButton)
         fiducialPickButton.connect('clicked()', self.createNewFiducial)
+        fiducialPickButton.connect('clicked()', self.fixed.fiducialList.Modified)
         fiducialPickFrame.layout().addWidget(fiducialPickLabel)
         fiducialPickFrame.layout().addWidget(fiducialPickButton)
+        # self.parent.connect('mrmlSceneChanged(vtkMRMLScene*)', self.setNewFiducial)
         # # Create spin box frame
         # fiducialEditFrame = qt.QFrame(fiducialCollapsibleButton)
         # fiducialEditFrame.setLayout(qt.QHBoxLayout())
@@ -200,22 +213,22 @@ class FastFiducialWidget:
         if not slicer.mrmlScene.IsNodePresent(self.moving.fiducialList):
             slicer.mrmlScene.AddNode(self.moving.fiducialList)
         # Get the singleton interactor from the scene
-        self.interactor = slicer.mrmlScene.AddNode(slicer.vtkMRMLInteractionNode())
         self.interactor.SwitchToSinglePlaceMode()
         # Get the singleton selector from the scene
-        self.selector = slicer.mrmlScene.AddNode(slicer.vtkMRMLSelectionNode())
         self.selector.SetActiveFiducialListID(self.fixed.fiducialList.GetID())
-        self.selector.SetActiveAnnotationID(self.fixed.newFiducial)
-        # Set up the scene observer
-        self.interactor.connect('')
-        if slicer.mrmlScene.:
-        # if left-click:
-        fiducialVolumeID = self.selector.GetSecondaryVolumeID()
-        if fiducialVolumeID == self.fixed.volume.GetID():
-        #    if inside correct volume slice view:
-            self.selector.
-        else:
-            self.createNewFiducial()
+        self.selector.SetActiveAnnotationID(self.fixed.newFiducial.GetID())
+        self.setNewFiducial(slicer.mrmlScene)
+
+    def setNewFiducial(self, newSceneNode):
+        # Allow click to set the new fiducial to the list
+        if self.fixed.fiducialList:
+            self.fixed.fiducialList.RemoveObserver(vtk.vtkCommand.ModifiedEvent)
+            self.fixed.fiducialList.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onMRMLNodeAdded)
+        self.fixed.fiducialList.UpdateScene(newSceneNode)
+        collection = vtk.vtkCollection()
+        self.fixed.fiducialList.GetDirectChildren(collection)
+        print collection.GetNumberOfItems()
+        ######
         #        create fiducial in volume labeled with fiducial list index
         #        add fiducial to appropriate list
         #    else:
@@ -236,8 +249,21 @@ class FastFiducialWidget:
         #    reset done flags
         # elif RET:
         #    ignore (both fiducials need to be set (i.e. both flags need to == 'done'))
-        self.selector.AddNewAnnotationIDToList(self.fixed.newFiducial.GetID())
-        print "Created a new fiducial"
+        # self.selector.AddNewAnnotationIDToList(self.fixed.newFiducial.GetID())
+        print "Created a new fiducial node"
+
+    def onMRMLNodeAdded(self, observer, eventid):
+        if eventid == slicer.mrmlScene.NodeAddedEvent: #slicer.vtkMRMLAnnotationFiducialNode.FiducialNodeAddedEvent???
+            # Get the node added
+            print "Getting the new node ID..."
+            newNodeID = self.selector.GetActiveAnnotationID()
+            newNode = slicer.mrmlScene.GetNodeByID(newNodeID)
+            if newNode.GetClassName() == 'vtkMRMLAnnotationFiducialNode':
+                print "Adding the new fiducial to the fixed list..."
+                newHeirarchyNode = newNode.GetParentNode()
+                newHeirarchyNode.SetParentNodeID(self.fixed.fiducialList.GetID())
+            else:
+                print "Not an annotation node OR not implemented for Slicer3"
 
     def editSelectedFiducial(self, fiducialIndex):
         print "The value is %d" % fiducialIndex
@@ -269,14 +295,15 @@ class FastFiducialWidget:
         qt.QMessageBox.information(slicer.util.mainWindow(), 'Register', 'Completed!')
         print "Running registration..."
         # 1) Run fiducial registration
-        # initialTransformNode = FastFiducialRegistration(self.fixedFiducialList, self.movingFiducialList)
+        initialTransformNode = FastFiducialRegistration(self.fixedFiducialList, self.movingFiducialList)
         # 2) Apply resulant transform to moving image
-        # TODO: self.movingVolume.SetParentNodeID(initialTransformNode.GetID())
+        self.movingVolume.SetParentNodeID(initialTransformNode.GetID())
         # 3) Run affine registration
-        # finalTransformNode = BRAINSFitEZRegistration(self.fixedVolume, self.movingVolume, initialTransformNode)
+        finalTransformNode = BRAINSFitEZRegistration(self.fixedVolume, self.movingVolume, initialTransformNode)
         # 4) Apply transform to moving image
-        # TODO: self.movingVolume.???
-        # 5) Display MMI difference image?
+        finalTransformNode.SetParentID(initialTransformNode.GetID())
+        self.movingVolume.SetParentID(finalTransformNode.GetID())
+        # 5) TODO: Display MMI difference image?
         return True
 
 class FastFiducialRegistration():
