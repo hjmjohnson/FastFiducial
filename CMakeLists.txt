@@ -14,17 +14,17 @@ endif()
 #   - Usually identique to the directory name)
 #   - You shouldn't call 'project(...)'. See SlicerConfig.cmake for more details.
 #-----------------------------------------------------------------------------
-set(EXTENSION_NAME FastAMIGO)
+set(EXTENSION_NAME FastFiducialRegistration)
 
 #-----------------------------------------------------------------------------
 # Prerequisites
 #-----------------------------------------------------------------------------
 if(NOT Slicer_SOURCE_DIR)
   set(EXTENSION_HOMEPAGE "http://www.slicer.org/slicerWiki/index.php/Slicer4:Developers:Projects:QtSlicer/Tutorials/ExtensionWriting")
-  set(EXTENSION_CATEGORY "Examples")
+  set(EXTENSION_CATEGORY "Wizards")
   set(EXTENSION_STATUS "Beta")
-  set(EXTENSION_DESCRIPTION "This is an example of scripted Qt loadable module built as an extension")
-  set(EXTENSION_DEPENDS NA) # Specified as a space separated list or 'NA' if any
+  set(EXTENSION_DESCRIPTION "Module to quickly (<90 sec) register two differing modalities from the same patient in a surgical suite environment")
+  set(EXTENSION_DEPENDS BRAINSFit FiducialRegistration) # Specified as a space separated list or 'NA' if any
 
   find_package(Slicer REQUIRED)
 
@@ -44,10 +44,11 @@ endif()
 # Sources
 #-----------------------------------------------------------------------------
 set(KIT_PYTHON_SCRIPTS
-  FastAMIGO.py
+  FastFiducial.py
   )
 
 set(KIT_PYTHON_RESOURCES
+  ffHelper.py
   )
 
 #-----------------------------------------------------------------------------
