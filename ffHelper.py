@@ -37,3 +37,6 @@ class ImageDataContainer():
         else:
             self.fiducialList = slicer.vtkMRMLFiducialListNode()
             self.newFiducial = slicer.vtkMRMLFiducial()
+
+    def addToScene(self, scene):
+        self.fiducialList.SetScene(scene)
