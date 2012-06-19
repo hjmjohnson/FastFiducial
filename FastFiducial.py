@@ -6,6 +6,26 @@ from __main__ import vtk
 from ffHelper import FFCollapsibleButton, qMRMLNodeAddVolumeComboBox, ImageDataContainer
 
 
+# #
+# # FastAMIGO
+# #
+# class WorkflowConfiguration:
+#   step_widget_files = [ 'fileIO',
+#                         'getFiducials',
+#                         'getROI',
+#                         'displayResults']
+
+#   step_widget_files = { 'fileIO':[('FixedImage', 'currentPath'),
+#                                   ('MixedImage', 'currentPath')],
+#                         'getFiducials':[()],
+#                         'getROI':[()],
+#                         'displayResults':[()] }
+
+#   def __init__(self):
+#         self.slicerVolumesLogic = slicer.vtkSlicerVolumesLogic()
+#         self.slicerVolumesLogic.SetMRMLScene(slicer.mrmlScene)
+
+
 class FastFiducial:
 
     def __init__(self, parent):

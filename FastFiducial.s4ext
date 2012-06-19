@@ -6,7 +6,7 @@
 
 # This is source code manager (i.e. svn)
 scm local
-scmurl Modules/Scripted/FastAMIGO
+scmurl Modules/Scripted/Scripts/FastFiducialRegistration
 
 # list dependencies
 # - These should be names of other modules that have .s4ext files
@@ -24,4 +24,4 @@ category    Registration
 status      Beta
 
 # One line stating what the module does
-description FastAMIGO is designed to quickly (<10 min) register two datasets from a single patient (in different modalities) using a quick fiducial registration to initialize a more robust Affine registration.
+description FastFiducialRegistration is designed to quickly (<90 sec) register two datasets from a single patient (in different modalities) using a quick fiducial registration to initialize a more robust Affine registration.
