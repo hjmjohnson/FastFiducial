@@ -31,7 +31,7 @@ class FastFiducial:
     def __init__(self, parent):
         parent.title = "Fast Fiducial Registration"
         parent.categories = ["Wizards"]
-        parent.dependencies = ["FiducialRegistration"]
+        parent.dependencies = ["FiducialRegistration", "BRAINSFit"]
         parent.contributors =["Dave Welch (UIowa)", "Hans Johnson (UIowa)",
                               "Nicole Aucoin (BWH)", "Ron Kikinis (BWH)"]
         slicerWikiDocUrl = parent.slicerWikiUrl + '/Documentation'
@@ -55,28 +55,35 @@ class FastFiducialWidget:
     Slicer module that creates a Qt GUI for fast registration of two data sets
     with fiducial markers
     """
-
     def __init__(self, parent=None):
-        self.fixed = None
-        self.moving = None
-        self.fixedVolumeNodeSelector = None
-        self.movingVolumeNodeSelector = None
-        self.interactor = None
-        self.selector = None
-        self.slicerVersion = None
         if parent is None:
+            self.fixed = None
+            self.moving = None
+            self.fixedVolumeSelector = None
+            self.movingVolumeSelector = None
+            self.interactor = None
+            self.selector = None
+            self.slicerVersion = None
+            # Boilerplate code
             self.parent = slicer.qMRMLWidget()
             self.parent.setLayout(qt.QVBoxLayout())
             self.parent.setMRMLScene(slicer.mrmlScene)
+            self.layout = self.parent.layout()
             self.setup()
-            self.fixedVolumeNodeSelector.setMRMLScene(slicer.mrmlScene)
-            self.movingVolumeNodeSelector.setMRMLScene(slicer.mrmlScene)
             self.parent.show()
         else:
             self.parent = parent
-        self.layout = self.parent.layout()
+            self.layout = self.parent.layout()
+        self.logic = FastFiducialLogic()
 
     def setup(self):
+        ### DEVELOPER ###
+        self.reloadButton = qt.QPushButton('Reload')
+        self.reloadButton.toolTip = 'Developer reload button'
+        self.reloadButton.name = 'FastFiducial Reload'
+        self.layout.addWidget(self.reloadButton)
+        self.reloadButton.connect('clicked()', self.onReload)
+        ###    END    ###
         self.slicerVersion = int(slicer.app.majorVersion)
         self.fixed = ImageDataContainer(self.slicerVersion)
         self.fixed.addToScene(slicer.mrmlScene)
@@ -87,7 +94,43 @@ class FastFiducialWidget:
         self._inputLayoutSection()
         self._fiducialLayoutSection()
         self._registrationLayoutSection()
+        ### DEVELOPER ###
+        import os
+        if os.environ['USER'] == 'dmwelch':
+            self.logic.testingData()
+            self.fixedVolumeSelector.setCurrentNode(slicer.util.getNode('fixed*'))
+            self.movingVolumeSelector.setCurrentNode(slicer.util.getNode('moving*'))
+        ### ***END*** ###
         self.layout.addStretch(1)
+
+    def onReload(self, moduleName="FastFiducial"):
+        """ Generic reload method for any scripted module.
+            ModuleWizard will subsitute correct default moduleName.
+        """
+        import imp, sys, os, slicer
+        widgetName = moduleName + "Widget"
+        # reload the source code
+        # - set source file path
+        # - load the module to the global space
+        filePath = eval('slicer.modules.%s.path' % moduleName.lower())
+        p = os.path.dirname(filePath)
+        if not sys.path.__contains__(p):
+            sys.path.insert(0,p)
+        fp = open(filePath, "r")
+        globals()[moduleName] = imp.load_module(moduleName, fp, filePath, ('.py', 'r', imp.PY_SOURCE))
+        fp.close()
+        # rebuild the widget
+        # - find and hide the existing widget
+        # - create a new widget in the existing parent
+        parent = slicer.util.findChildren(name='%s Reload' % moduleName)[0].parent()
+        print parent
+        for child in parent.children():
+            try:
+                child.hide()
+            except AttributeError:
+                pass
+        globals()[widgetName.lower()] = eval('globals()["%s"].%s(parent)' % (moduleName, widgetName))
+        globals()[widgetName.lower()].setup()
 
     def _threeByThreeCompareView(self):
         """
@@ -165,6 +208,9 @@ class FastFiducialWidget:
                             self.movingVolumeSelector,
                             'setMRMLScene(vtkMRMLScene*)')
         movingVolumeFrame.layout().addWidget(self.movingVolumeSelector)
+        # Moved from __init__()
+        self.fixedVolumeSelector.setMRMLScene(slicer.mrmlScene)
+        self.movingVolumeSelector.setMRMLScene(slicer.mrmlScene)
 
     def setFixedVolumeNode(self, newVolumeNode):
         self._setVolumeNode(newVolumeNode, 'fixed')
@@ -326,8 +372,48 @@ class FastFiducialWidget:
         # 5) TODO: Display MMI difference image?
         return True
 
+class FastFiducialLogic(object):
+    """ Implement fiducial picking logic and registration logic for the module
+    """
+    def __init__(self, fixed=None, moving=None):
+        self.fixedList = None
+        self.movingList = None
+        self.fixed = fixed
+        self.moving = moving
+
+    def testingData(self):
+        """ Load some default data for development
+            and set up a transform and viewing scenario for it.
+        """
+        dataDirectory = 'Development/src/extensions/FastFiducial/Testing/Data'
+        if not slicer.util.getNodes('fixed*'):
+            import os
+            fileName = os.path.join(os.environ['HOME'], dataDirectory, 'fixed.nii.gz')
+            vl = slicer.modules.volumes.logic()
+            volumeNode = vl.AddArchetypeScalarVolume (fileName, "fixed", 0)
+        if not slicer.util.getNodes('moving*'):
+            import os
+            fileName = os.path.join(os.environ['HOME'], dataDirectory, 'moving.nii.gz')
+            vl = slicer.modules.volumes.logic()
+            volumeNode = vl.AddArchetypeScalarVolume (fileName, "neutral", 0)
+        head = slicer.util.getNode('fixed')
+        neutral = slicer.util.getNode('moving')
+        compositeNodes = slicer.util.getNodes('vtkMRMLSliceCompositeNode*')
+        for compositeNode in compositeNodes.values():
+            compositeNode.SetBackgroundVolumeID(head.GetID())
+            compositeNode.SetForegroundVolumeID(neutral.GetID())
+            compositeNode.SetForegroundOpacity(0.5)
+        applicationLogic = slicer.app.applicationLogic()
+        applicationLogic.FitSliceToAll()
+
+
 class FastFiducialRegistration():
-    def __init__(self, sceneFixedList, sceneMovingList):
+    """ Run the registration once the registration button is clicked """
+    def __init__(self, fixedImage=None, movingImage=None):
+        self.fixedImage = fixedImage
+        self.movingImage = movingImage
+
+    def _setFiducialLists(self, sceneFixedList=None, sceneMovingList=None):
         self.fixed = sceneFixedList
         self.moving = sceneMovingList
         if self.fixed.GetClassName() == 'vtkMRMLAnnotationHierarchyNode':
