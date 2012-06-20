@@ -385,17 +385,17 @@ class FastFiducialLogic(object):
         """ Load some default data for development
             and set up a transform and viewing scenario for it.
         """
-        dataDirectory = 'Development/src/extensions/FastFiducial/Testing/Data'
+        import os
+        dataDirectory = os.path.join(os.environ['HOME'],
+                                     'Development/src/extensions/FastFiducial/Testing/Data')
         if not slicer.util.getNodes('fixed*'):
-            import os
-            fileName = os.path.join(os.environ['HOME'], dataDirectory, 'fixed.nii.gz')
+            fileName = os.path.join(dataDirectory, 'fixed.nii.gz')
             vl = slicer.modules.volumes.logic()
             volumeNode = vl.AddArchetypeScalarVolume (fileName, "fixed", 0)
         if not slicer.util.getNodes('moving*'):
-            import os
-            fileName = os.path.join(os.environ['HOME'], dataDirectory, 'moving.nii.gz')
+            fileName = os.path.join(dataDirectory, 'moving.nii.gz')
             vl = slicer.modules.volumes.logic()
-            volumeNode = vl.AddArchetypeScalarVolume (fileName, "neutral", 0)
+            volumeNode = vl.AddArchetypeScalarVolume (fileName, "moving", 0)
         head = slicer.util.getNode('fixed')
         neutral = slicer.util.getNode('moving')
         compositeNodes = slicer.util.getNodes('vtkMRMLSliceCompositeNode*')
