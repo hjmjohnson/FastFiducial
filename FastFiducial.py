@@ -27,7 +27,6 @@ from ffHelper import FFCollapsibleButton, qMRMLNodeAddVolumeComboBox, ImageDataC
 
 
 class FastFiducial:
-
     def __init__(self, parent):
         parent.title = "Fast Fiducial Registration"
         parent.categories = ["Wizards"]
@@ -372,6 +371,7 @@ class FastFiducialWidget:
         # 5) TODO: Display MMI difference image?
         return True
 
+
 class FastFiducialLogic(object):
     """ Implement fiducial picking logic and registration logic for the module
     """
@@ -489,6 +489,7 @@ class FastFiducialRegistration():
         initialTransformNode = slicer.cli.run(slicer.modules.fiducialregistration, None,
                                               fiducialRegistrationParameters, True)
         return initialTransformNode
+
 
 class BRAINSFitEZRegistration():
     def __init__(fixedVolume, movingVolume, initialTransform):
